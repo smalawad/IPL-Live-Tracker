@@ -1,0 +1,36 @@
+services:
+  redis:
+    image: redis:7
+    container_name: ipl-redis
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - ipl-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ipl-live-score:
+    build: .
+    image: ipl-live-score:latest
+    container_name: ipl-live-score
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - ipl-network
+
+volumes:
+  redis-data:
+
+networks:
+  ipl-network:
